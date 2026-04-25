@@ -1,0 +1,87 @@
+{
+  "frame": {
+    "baseline_today": "Support triage is manual and inconsistent.",
+    "desired_improvement": "Reduce first-response delay and improve routing correctness without increasing operational risk.",
+    "decision_statement": "Choose one routing approach to prototype next."
+  },
+  "altitude": {
+    "statement": "All options are solution approaches for the same support-routing opportunity.",
+    "comparable": true,
+    "notes": "Same scope and evaluation horizon."
+  },
+  "scale": {
+    "min": 0,
+    "max": 2,
+    "labels": {
+      "0": "Red",
+      "1": "Yellow",
+      "2": "Green"
+    }
+  },
+  "settings": {
+    "must_points": 5,
+    "nice_points": 1,
+    "near_tie_threshold": 0.05,
+    "rank_disqualified": false
+  },
+  "criteria": [
+    {
+      "id": "c1",
+      "name": "Covers the highest-volume routing cases",
+      "priority": "must",
+      "direction": "benefit"
+    },
+    {
+      "id": "c2",
+      "name": "Keeps customer data handling within approved systems",
+      "priority": "must",
+      "direction": "benefit"
+    },
+    {
+      "id": "c3",
+      "name": "Is fast to validate with a prototype",
+      "priority": "nice",
+      "direction": "benefit"
+    },
+    {
+      "id": "c4",
+      "name": "Is easy for agents to understand and override",
+      "priority": "nice",
+      "direction": "benefit"
+    }
+  ],
+  "options": [
+    {
+      "id": "o1",
+      "name": "Rules-based router",
+      "description": "Route tickets with explicit rules based on product, plan, and issue type.",
+      "assumptions": ["Issue taxonomy is good enough for an initial prototype."]
+    },
+    {
+      "id": "o2",
+      "name": "LLM-assisted classifier",
+      "description": "Use an LLM to classify incoming tickets and recommend a queue.",
+      "assumptions": ["PII controls and review flow are accepted."]
+    },
+    {
+      "id": "o3",
+      "name": "Manual queue cleanup",
+      "description": "Keep routing manual but improve queue hygiene with batch review.",
+      "assumptions": ["Ops team has capacity for daily cleanup."]
+    }
+  ],
+  "scores": [
+    {"option_id": "o1", "criterion_id": "c1", "score": 2, "aspect_note": "Handles the most common product/plan/issue combinations directly."},
+    {"option_id": "o1", "criterion_id": "c2", "score": 2, "aspect_note": "Uses existing support platform fields and permissions."},
+    {"option_id": "o1", "criterion_id": "c3", "score": 2, "aspect_note": "Can be piloted with a small rule set."},
+    {"option_id": "o1", "criterion_id": "c4", "score": 2, "aspect_note": "Agents can inspect and override rules."},
+    {"option_id": "o2", "criterion_id": "c1", "score": 2, "aspect_note": "Likely covers more ambiguous cases than rules."},
+    {"option_id": "o2", "criterion_id": "c2", "score": 1, "aspect_note": "Needs policy review for data handling and logging."},
+    {"option_id": "o2", "criterion_id": "c3", "score": 1, "aspect_note": "Prototype is possible but requires guardrails."},
+    {"option_id": "o2", "criterion_id": "c4", "score": 1, "aspect_note": "Recommendations may need explanation UI."},
+    {"option_id": "o3", "criterion_id": "c1", "score": 1, "aspect_note": "Improves cleanup but does not route most cases at intake."},
+    {"option_id": "o3", "criterion_id": "c2", "score": 2, "aspect_note": "No new data movement."},
+    {"option_id": "o3", "criterion_id": "c3", "score": 2, "aspect_note": "Can start immediately with a checklist."},
+    {"option_id": "o3", "criterion_id": "c4", "score": 2, "aspect_note": "Easy for agents to understand."}
+  ]
+}

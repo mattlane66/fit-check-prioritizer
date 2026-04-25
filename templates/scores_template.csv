@@ -1,0 +1,7 @@
+option_id,criterion_id,score,aspect_note
+o1,c1,2,Strong fit on highest-volume cases
+o1,c2,2,Stays inside approved controls
+o1,c3,1,Prototype requires some setup
+o2,c1,1,Partial coverage
+o2,c2,2,Low operational risk
+o2,c3,2,Fast to validate
