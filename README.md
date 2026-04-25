@@ -1,9 +1,11 @@
 # fit-check-prioritizer
 
-Use this decision matrix for gnarly prioritization problems. It feeds your finished decision matrix sheet with TOPSIS.
+Use this decision matrix for gnarly prioritization problems. It feeds your finished Fit-check Decision Matrix sheet with TOPSIS.
 
-This repo contains a Fit-check TOPSIS skill bundle for ranking comparable options with:
+This repo contains a Fit-check TOPSIS skill bundle for ranking comparable paths/options with:
 
+- a decision frame grounded in a real episode,
+- comparable options at the same altitude,
 - criteria and options,
 - per-cell aspect notes,
 - numeric score mapping such as Red/Yellow/Green = 0/1/2,
@@ -20,6 +22,7 @@ schemas/fit_check_topsis.schema.json      JSON input contract
 templates/criteria_template.csv           Criteria template
 templates/options_template.csv            Options template
 templates/scores_template.csv             Long-form scores + aspect notes template
+templates/sheet_layout.md                 Human-facing spreadsheet layout guide
 examples/example_matrix.json              Complete example input
 scripts/topsis.py                         Dependency-free TOPSIS runner
 tests/test_topsis.py                      Basic regression tests
@@ -55,14 +58,17 @@ python -m unittest discover -s tests -v
 
 ## Input model
 
-Use JSON for execution and CSV for collaborative data entry. The recommended workflow is:
+Use JSON for execution and CSV for normalized data entry. Use `templates/sheet_layout.md` when working in a collaborative spreadsheet with criteria in rows and approaches/options in columns.
 
-1. Confirm all options are the same altitude.
-2. Define atomic, positively phrased criteria.
-3. Label each criterion `must` or `nice`, or provide explicit criterion weights.
-4. Add per-cell aspect notes separately from numeric scores.
-5. Score each option/criterion cell numerically.
-6. Run TOPSIS on non-disqualified options by default.
+The recommended workflow is:
+
+1. Start from the frame: situation/context, old way, trigger, constraints/misfits, desired outcome, and success criteria.
+2. Confirm all options are at the same altitude.
+3. Define atomic, positively phrased criteria.
+4. Label each criterion `must` or `nice`, or provide explicit criterion weights.
+5. Add per-cell aspect notes separately from numeric scores.
+6. Score each option/criterion cell numerically.
+7. Run TOPSIS on non-disqualified options by default.
 
 ## Defaults
 
