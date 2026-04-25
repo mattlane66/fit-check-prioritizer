@@ -1,13 +1,13 @@
 # fit-check-prioritizer
 
-Use this decision matrix for gnarly prioritization problems. It feeds your finished Fit-check Decision Matrix sheet with TOPSIS.
+Use this decision matrix for gnarly prioritization problems. It feeds your finished Fit-check Decision Matrix sheet with TOPSIS. Get a sense of it [here](https://chatgpt.com/g/g-696810f0b98081918c1211ecd38f62a3-fit-check-decision-matrix-with-topsis). You can view a template sheet [here](https://docs.google.com/spreadsheets/d/1ATsYRHJ5M14awkcD8nEF55zM4iwbuXxFpUd4ZbcNUm8/edit?usp=sharing).
 
-This repo contains a Fit-check TOPSIS skill bundle for ranking comparable paths/options with:
+This repo contains a Fit-check TOPSIS skill bundle for ranking comparable idea paths/solution options with:
 
 - a decision frame grounded in a real episode,
-- comparable options at the same altitude,
-- criteria and options,
-- per-cell aspect notes,
+- comparable options ideally at the same altitude,
+- criteria to eval options,
+- per-cell aspect notes to explain how a solution satisfies a criterion,
 - numeric score mapping such as Red/Yellow/Green = 0/1/2,
 - Points-to-Percentage weights for Must vs. Nice criteria,
 - default Must-have gating,
@@ -62,12 +62,12 @@ Use JSON for execution and CSV for normalized data entry. Use `templates/sheet_l
 
 The recommended workflow is:
 
-1. Start from the frame: situation/context, old way, trigger, constraints/misfits, desired outcome, and success criteria.
+1. Start from the frame: situation/context, old and current way, trigger, misfits, and desired outcome.
 2. Confirm all options are at the same altitude.
 3. Define atomic, positively phrased criteria.
 4. Label each criterion `must` or `nice`, or provide explicit criterion weights.
 5. Add per-cell aspect notes separately from numeric scores.
-6. Score each option/criterion cell numerically.
+6. Score each option cell numerically.
 7. Run TOPSIS on non-disqualified options by default.
 
 ## Defaults
