@@ -1,63 +1,127 @@
 # Fit-Check Decision Matrix with TOPSIS
 
-Use this skill when a user wants to rank comparable options using a Fit-check Decision Matrix and TOPSIS.
+Use this skill when a user wants to compare same-altitude paths, opportunities, experiments, or solution approaches with a Fit-check Decision Matrix and TOPSIS.
 
 ## When to use
 
-Use for multi-criteria prioritization where the user has:
-- comparable options at the same altitude,
-- criteria that define standards of judgment,
-- per-cell notes/aspects,
-- numeric scores or color grades that can be mapped to numeric scores,
-- weights or Must/Nice labels.
+Use for gnarly prioritization where the user has several comparable options and needs structured judgment before deciding what to pursue, shape, prototype, test, or implement.
+
+Good comparison sets include:
+- parent opportunities compared against other parent opportunities,
+- sibling child opportunities under the same parent,
+- solution approaches for one chosen opportunity,
+- experiments or spikes that test the same kind of uncertainty,
+- paths before shaping when several possible approaches are still half-baked.
 
 Do not use when options are not comparable. Stop and recommend separate matrices if options differ in scope, altitude, time horizon, or success metrics.
 
 ## Matrix convention
 
-For computation:
-- options are rows,
-- criteria are columns.
+The human sheet convention is:
+- criteria in rows,
+- approaches/options/paths in columns,
+- each option column includes a one-sentence description,
+- each criterion-option cell includes an aspect note plus a score.
 
-If the user supplies criteria as rows and options as columns, transpose internally and state that you did.
+The computation convention is normalized:
+- options are rows,
+- criteria are columns,
+- scores are long-form records with `option_id`, `criterion_id`, `score`, and `aspect_note`.
+
+If the user supplies the human sheet layout, transpose/normalize internally and state that you did.
+
+## Start with the frame
+
+Before scoring, reconstruct the decision frame. Capture as much of this as the user can provide:
+
+- Decision from the opportunity identified: what choice is being made?
+- Situation / Context: in the last real episode, when the person was trying to do what, in what context, using what?
+- Old way: how did they handle it before?
+- Trigger / forcing function: what changed that made the old/current way no longer acceptable?
+- Constraints / Misfits: what was difficult, risky, slow, expensive, draining, incompatible, or complex?
+- Desired outcome: what should the new approach make better?
+- Success criteria: how would they know it worked?
+- Rejected alternatives: what else was considered, and why did those not win?
+
+If the frame is missing, ask only for the smallest amount needed to compare options responsibly. If the user wants to proceed anyway, label assumptions clearly.
+
+## Empirical requirement prompts
+
+Use these prompts to help extract empirical, technology-agnostic requirements before criteria are finalized:
+
+- Reconstruct the last real episode: "Tell me about the last specific time you were trying to get this done."
+- Establish the timeline: "When did you first notice the current way wasn’t good enough?"
+- Capture the pre-switch behavior: "What were you doing instead up to that point?"
+- Find the forcing function: "What changed that made continuing that way no longer okay?"
+- Surface constraints and tradeoffs: "What was difficult, risky, slow, expensive, or draining about it?"
+- Clarify the hoped-for improvement: "What exactly did you expect the new approach to make better?"
+- Define success concretely: "How would you have known it was working?"
+- Check alternatives and non-adoption: "What else did you consider, and why didn’t those win?"
 
 ## Required inputs
 
 TOPSIS requires complete numeric values for every ranked option across every included criterion.
 
 Required:
-1. Numeric score matrix.
-2. Weights per criterion, or Must/Nice labels that can be converted to points.
-3. Criterion direction: `benefit` or `cost`.
-4. Must-have criteria for default gating, or permission to infer them from `must` labels.
+1. Comparable options at the same altitude.
+2. A decision statement and desired outcome.
+3. Criteria as standards of judgment.
+4. Aspect notes for how each option handles each criterion.
+5. Numeric scores, or color grades that can be mapped to numeric scores.
+6. Weights per criterion, or Must/Nice labels that can be converted to points.
+7. Criterion direction: `benefit` or `cost`.
+8. Must-have criteria for default gating, or permission to infer them from `must` labels.
 
 Default score mapping:
-- Red = 0 = blocker or unacceptable fit.
-- Yellow = 1 = workable but weak or concerning.
-- Green = 2 = strong fit or advantage.
+- Red = 0 = blocker / fails the standard / unacceptable tradeoff.
+- Yellow = 1 = workable but meaningfully weak / concern.
+- Green = 2 = strong fit / advantage.
 
-If only colors are provided, propose this mapping and label it as assumed.
+The text aspect is what is true; the color/score is the judgment of fitness given the text.
 
 ## Altitude check
 
 Before computing, confirm all options are the same kind of thing:
-- sibling opportunities,
-- sibling solution approaches for the same opportunity,
+- same parent or same chosen opportunity,
 - same time horizon,
 - same scope,
-- same success definition.
+- same success definition,
+- same decision type.
 
-If mixed altitude, stop. Suggest separate matrices.
+Rule of thumb: if two options have different scopes, time horizons, or success metrics, split into separate matrices.
+
+This model is best suited for leaf/terminal nodes, such as solutions to shape or experiments to run.
 
 ## Criteria rules
 
 Criteria must be:
 - standards of judgment, not generic traits,
 - atomic: one idea per criterion,
+- relevant to the frame,
+- consistently phrased,
 - positively phrased when using 0/1/2 scores so higher is better.
 
-If a criterion includes “and,” split it.
-If a criterion is negatively phrased, rewrite it as a positive criterion and confirm the rewrite before scoring unless the user has already provided clear numeric scores.
+Useful criterion categories:
+- fitness to solve the problem: coverage, reliability, latency, correctness, usability, accessibility, maintainability,
+- costs: engineering effort, time, money, opportunity cost,
+- risks: privacy/security, failure modes, adoption risk, technical risk,
+- compatibility and complexity: integration burden, dependencies, cognitive load, operational complexity,
+- purpose-built / reflective fit: how specifically the option matches the frame instead of being generic.
+
+If a criterion includes "and," split it. If a criterion is negatively phrased, rewrite it as a positive criterion and confirm the rewrite before scoring unless the user has already provided clear numeric scores.
+
+## Aspect notes
+
+Each cell should answer: "How does this option handle this criterion?"
+
+Use concrete, checkable content:
+- mechanisms: uses X to do Y,
+- constraints: requires SSO; adds one extra step,
+- dependencies: needs data from system A; creates a new service,
+- failure modes: breaks if Z; mitigated by Y,
+- assumptions: works only if A is true.
+
+Avoid vibes like "seems good." Avoid yes/no-only, true/false-only, and numeric-only cells. If uncertain, write: "Unknown: needs test."
 
 ## Weights
 
@@ -66,6 +130,7 @@ Use Points-to-Percentage unless explicit weights are provided.
 Default points:
 - Nice-to-have = 1 point.
 - Must-have = 5 points.
+- Optionally use Must-have = 3 points when the group wants less separation.
 
 Formula:
 
@@ -74,6 +139,8 @@ weight_j = points_j / sum(points_all_criteria)
 ```
 
 Keep at least 4 decimal places internally. Display rounded weights only with a rounding note.
+
+Practical tip: do not overthink exactness. Weighting is a statement of priorities. Keep it conversational with a small relevant group. Start by marking only the Must Haves before calculating weights.
 
 If criteria are excluded because of missing data or zero denominator, renormalize the remaining weights and report that.
 
@@ -85,6 +152,8 @@ Default behavior:
 - For other scales, disqualifying means `score == minimum scale value` unless the user specifies a threshold.
 - Rank only non-disqualified options by default.
 - Compute TOPSIS for disqualified options only if the user explicitly asks for a transparency run.
+
+Any Red (0) on a truly must-have row should trigger: fix the approach or drop it, regardless of TOPSIS rank.
 
 If all options are disqualified, stop and recommend revising options or constraints. Do not relax must-haves without explicit approval.
 
@@ -144,15 +213,33 @@ C_i = S-_i / (S+_i + S-_i)
 
 Rank by descending `C_i`.
 
+## Cost vs. benefit
+
+Default: if every criterion is positively phrased and scored 0/1/2 where 2 = best, treat every criterion as `benefit`.
+
+Only use `cost` if the criterion keeps raw numbers where lower is better, such as dollars, weeks, or effort. Preferred workflow: convert raw costs into a 0/1/2 higher-is-better score before TOPSIS.
+
 ## Sanity checks
 
 Always report:
-- whether weights sum to 1 within rounding tolerance,
-- disqualified options and the must-have criteria causing disqualification,
+- altitude check: all columns/options are truly comparable,
+- criteria check: no duplicates and no kitchen-sink rows,
+- weight check: normalized weights sum to 1 within rounding tolerance,
+- scoring consistency: Green/Yellow/Red mean the same thing across options,
+- blocker logic: Red on a must-have triggers fix/drop,
 - excluded criteria,
 - dominated options,
 - double-counting risks when criteria are near duplicates,
-- near ties when top coefficients differ by less than 0.05.
+- near ties when top coefficients differ by less than 0.05,
+- whether the top result is driven by one weird row.
+
+## Decide and choose the next action
+
+After ranking, recommend the next action for the decision altitude:
+
+- Opportunity selection: discovery spike, lightweight experiment, sizing, stakeholder alignment.
+- Solution/path selection: shape the approach, prototype, technical spike, implementation plan.
+- If uncertainty dominates: define 1-3 assumptions to test, then run the smallest test that can falsify them.
 
 ## Output format
 
@@ -160,29 +247,38 @@ Return results in this order:
 
 1. TL;DR: winner among non-disqualified options with TOPSIS closeness.
 2. Disqualifications.
-3. Verified inputs used:
-   - options,
+3. Frame used:
+   - decision statement,
+   - baseline / old way,
+   - trigger / forcing function,
+   - constraints / misfits,
+   - desired outcome,
+   - success criteria,
+   - rejected alternatives.
+4. Verified inputs used:
+   - options/paths,
    - criteria,
-   - score table or slice,
+   - aspect notes or score table slice,
    - weights table,
    - directions.
-4. Computation notes:
+5. Computation notes:
    - transposition,
    - exclusions,
    - zero denominators,
    - missing-data handling.
-5. TOPSIS results:
+6. TOPSIS results:
    - option,
    - closeness coefficient,
    - rank,
    - S+,
    - S-.
-6. Interpretation guidance:
+7. Interpretation guidance:
    - near ties,
    - key drivers,
-   - single-criterion dominance.
-7. Unknowns and assumptions.
-8. Action checklist.
+   - single-criterion dominance,
+   - whether the next move should be select, shape, prototype, spike, or test assumptions.
+8. Unknowns and assumptions.
+9. Action checklist.
 
 ## Important limitation
 
