@@ -1,0 +1,4 @@
+criterion_id,criterion_name,description,priority,points,weight,direction,is_must,disqualifying_score
+c1,Covers the highest-volume use cases,,must,,,benefit,true,0
+c2,Keeps risk within approved controls,,must,,,benefit,true,0
+c3,Is fast to validate,,nice,,,benefit,false,

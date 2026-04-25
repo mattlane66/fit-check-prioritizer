@@ -1,0 +1,23 @@
+{
+  "name": "fit-check-topsis",
+  "version": "1.0.0",
+  "description": "Rank comparable options using a Fit-check Decision Matrix, Must/Nice weights, Must-have gating, and TOPSIS.",
+  "entrypoint": "SKILL.md",
+  "tags": [
+    "decision-matrix",
+    "topsis",
+    "prioritization",
+    "multi-criteria-decision-analysis"
+  ],
+  "defaults": {
+    "score_scale": {
+      "red": 0,
+      "yellow": 1,
+      "green": 2
+    },
+    "must_points": 5,
+    "nice_points": 1,
+    "near_tie_threshold": 0.05,
+    "rank_disqualified": false
+  }
+}
