@@ -2,6 +2,14 @@
 
 Use this skill when a user wants to compare same-altitude paths, opportunities, experiments, or solution approaches with a Fit-check Decision Matrix and TOPSIS.
 
+## Core principles
+
+- Accuracy beats speed. Never invent missing scores, weights, criteria, or option data.
+- Ask only the minimal clarifying questions needed to run or responsibly frame the matrix, with a maximum of 3 questions before proceeding or stopping.
+- Separate `VERIFIED`, `ASSUMED`, and `INFERRED` information whenever uncertainty matters.
+- Keep narrative aspect notes separate from numeric scoring. Preserve user-provided notes, but never treat notes as numbers.
+- Enforce apples-to-apples altitude. If options differ in scope, time horizon, success definition, or decision type, stop and recommend separate matrices.
+
 ## When to use
 
 Use for gnarly prioritization where the user has several comparable options and needs structured judgment before deciding what to pursue, shape, prototype, test, or implement.
@@ -57,6 +65,16 @@ Use these prompts to help extract empirical, technology-agnostic requirements be
 - Clarify the hoped-for improvement: "What exactly did you expect the new approach to make better?"
 - Define success concretely: "How would you have known it was working?"
 - Check alternatives and non-adoption: "What else did you consider, and why didn’t those win?"
+
+## Startup questions
+
+Ask these only if they block computation or responsible framing. Ask no more than 3 total questions.
+
+1. Are all scores higher-is-better, or do any criteria represent raw costs where lower is better?
+2. Which criteria are Must vs Nice, or should the default Must = 5 and Nice = 1 points mapping be used?
+3. Are the options comparable at the same altitude: same scope, time horizon, decision type, and success definition?
+
+If the answer can be safely inferred from the provided matrix, proceed and label it as `INFERRED` or `ASSUMED`.
 
 ## Required inputs
 
@@ -162,7 +180,8 @@ If all options are disqualified, stop and recommend revising options or constrai
 If any cell is missing or unreadable:
 1. Ask only for the missing cells, with at most three questions.
 2. If the user cannot provide them, exclude the entire criterion for all options and report it.
-3. Do not impute missing values unless the user explicitly requests imputation and the method is stated.
+3. Exclude an option only with explicit user approval.
+4. Do not impute missing values unless the user explicitly requests imputation and the method is stated.
 
 ## TOPSIS calculation
 
@@ -233,6 +252,27 @@ Always report:
 - near ties when top coefficients differ by less than 0.05,
 - whether the top result is driven by one weird row.
 
+## Large matrix protocol
+
+Use progressive disclosure when:
+- `options * criteria > 200`, or
+- options > 15, or
+- criteria > 15.
+
+For large matrices, do not print full intermediate matrices unless asked. Default to:
+- inputs summary: criteria, weights, directions, and must-have gates,
+- disqualifications and exclusions,
+- TOPSIS results table,
+- per-criterion contribution or top-driver summary when available,
+- unknowns and assumptions.
+
+Offer follow-up commands:
+- Show full score matrix.
+- Show normalization and weighted matrix.
+- Explain why option A outranks option B.
+- Show contribution by criterion.
+- Rerun with alternate Must/Nice mapping.
+
 ## Decide and choose the next action
 
 After ranking, recommend the next action for the decision altitude:
@@ -255,30 +295,34 @@ Return results in this order:
    - desired outcome,
    - success criteria,
    - rejected alternatives.
-4. Verified inputs used:
+4. Input status:
+   - `VERIFIED`: directly provided by the user or source matrix,
+   - `ASSUMED`: filled by default rule or explicit working assumption,
+   - `INFERRED`: derived from provided inputs.
+5. Verified inputs used:
    - options/paths,
    - criteria,
    - aspect notes or score table slice,
    - weights table,
    - directions.
-5. Computation notes:
+6. Computation notes:
    - transposition,
    - exclusions,
    - zero denominators,
    - missing-data handling.
-6. TOPSIS results:
+7. TOPSIS results:
    - option,
    - closeness coefficient,
    - rank,
    - S+,
    - S-.
-7. Interpretation guidance:
+8. Interpretation guidance:
    - near ties,
    - key drivers,
    - single-criterion dominance,
    - whether the next move should be select, shape, prototype, spike, or test assumptions.
-8. Unknowns and assumptions.
-9. Action checklist.
+9. Unknowns and assumptions.
+10. Action checklist.
 
 ## Important limitation
 
