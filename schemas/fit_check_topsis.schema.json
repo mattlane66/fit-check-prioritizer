@@ -10,9 +10,44 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "decision_from_opportunity": {"type": "string"},
+        "decision_statement": {"type": "string"},
+        "situation_context": {"type": "string"},
+        "last_real_episode": {"type": "string"},
         "baseline_today": {"type": "string"},
+        "old_way": {"type": "string"},
+        "trigger_forcing_function": {"type": "string"},
+        "constraints_misfits": {
+          "oneOf": [
+            {"type": "string"},
+            {"type": "array", "items": {"type": "string"}}
+          ]
+        },
+        "desired_outcome": {"type": "string"},
         "desired_improvement": {"type": "string"},
-        "decision_statement": {"type": "string"}
+        "success_criteria": {
+          "oneOf": [
+            {"type": "string"},
+            {"type": "array", "items": {"type": "string"}}
+          ]
+        },
+        "rejected_alternatives": {
+          "oneOf": [
+            {"type": "string"},
+            {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["name"],
+                "properties": {
+                  "name": {"type": "string"},
+                  "reason_rejected": {"type": "string"}
+                }
+              }
+            }
+          ]
+        }
       }
     },
     "altitude": {
@@ -21,6 +56,10 @@
       "additionalProperties": false,
       "properties": {
         "statement": {"type": "string"},
+        "comparison_type": {
+          "type": "string",
+          "enum": ["parent_opportunities", "sibling_child_opportunities", "solution_paths", "experiments", "spikes", "other"]
+        },
         "comparable": {"type": "boolean"},
         "notes": {"type": "string"}
       }
@@ -58,6 +97,10 @@
           "id": {"type": "string"},
           "name": {"type": "string"},
           "description": {"type": "string"},
+          "category": {
+            "type": "string",
+            "enum": ["fitness", "cost", "risk", "compatibility_complexity", "purpose_built", "other"]
+          },
           "priority": {"type": "string", "enum": ["must", "nice"]},
           "points": {"type": "number"},
           "weight": {"type": "number", "minimum": 0},
@@ -78,6 +121,7 @@
           "id": {"type": "string"},
           "name": {"type": "string"},
           "description": {"type": "string"},
+          "option_type": {"type": "string", "enum": ["opportunity", "solution_path", "experiment", "spike", "other"]},
           "assumptions": {"type": "array", "items": {"type": "string"}}
         }
       }
@@ -92,7 +136,9 @@
           "option_id": {"type": "string"},
           "criterion_id": {"type": "string"},
           "aspect_note": {"type": "string"},
-          "score": {"type": "number"}
+          "score": {"type": "number"},
+          "color": {"type": "string", "enum": ["red", "yellow", "green", "Red", "Yellow", "Green"]},
+          "uncertainty_note": {"type": "string"}
         }
       }
     }
