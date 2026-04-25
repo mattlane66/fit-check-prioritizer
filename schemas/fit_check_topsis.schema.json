@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/fit_check_topsis.schema.json",
+  "title": "Fit-check TOPSIS Decision Matrix",
+  "type": "object",
+  "required": ["altitude", "criteria", "options", "scores"],
+  "additionalProperties": false,
+  "properties": {
+    "frame": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "baseline_today": {"type": "string"},
+        "desired_improvement": {"type": "string"},
+        "decision_statement": {"type": "string"}
+      }
+    },
+    "altitude": {
+      "type": "object",
+      "required": ["comparable"],
+      "additionalProperties": false,
+      "properties": {
+        "statement": {"type": "string"},
+        "comparable": {"type": "boolean"},
+        "notes": {"type": "string"}
+      }
+    },
+    "scale": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "min": {"type": "number", "default": 0},
+        "max": {"type": "number", "default": 2},
+        "labels": {
+          "type": "object",
+          "additionalProperties": {"type": ["string", "number"]}
+        }
+      }
+    },
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "must_points": {"type": "number", "default": 5},
+        "nice_points": {"type": "number", "default": 1},
+        "near_tie_threshold": {"type": "number", "default": 0.05},
+        "rank_disqualified": {"type": "boolean", "default": false}
+      }
+    },
+    "criteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "name"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string"},
+          "name": {"type": "string"},
+          "description": {"type": "string"},
+          "priority": {"type": "string", "enum": ["must", "nice"]},
+          "points": {"type": "number"},
+          "weight": {"type": "number", "minimum": 0},
+          "direction": {"type": "string", "enum": ["benefit", "cost"], "default": "benefit"},
+          "is_must": {"type": "boolean"},
+          "disqualifying_score": {"type": "number"}
+        }
+      }
+    },
+    "options": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": ["id", "name"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string"},
+          "name": {"type": "string"},
+          "description": {"type": "string"},
+          "assumptions": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "scores": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["option_id", "criterion_id", "score"],
+        "additionalProperties": false,
+        "properties": {
+          "option_id": {"type": "string"},
+          "criterion_id": {"type": "string"},
+          "aspect_note": {"type": "string"},
+          "score": {"type": "number"}
+        }
+      }
+    }
+  }
+}
