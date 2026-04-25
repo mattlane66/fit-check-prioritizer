@@ -10,8 +10,11 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-
 DEFAULT_POINTS = {"must": 5.0, "nice": 1.0}
+
+
+class AltitudeError(ValueError):
+    """Raised when the matrix mixes non-comparable options."""
 
 
 def load_matrix(path: str) -> Dict[str, Any]:
@@ -41,10 +44,7 @@ def normalize_criteria(criteria: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
 
 
 def score_lookup(scores: List[Dict[str, Any]]) -> Dict[Tuple[str, str], float]:
-    out: Dict[Tuple[str, str], float] = {}
-    for row in scores:
-        out[(row["option_id"], row["criterion_id"])] = float(row["score"])
-    return out
+    return {(row["option_id"], row["criterion_id"]): float(row["score"]) for row in scores}
 
 
 def disqualified_options(matrix: Dict[str, Any], criteria: List[Dict[str, Any]]) -> Dict[str, List[str]]:
@@ -55,21 +55,28 @@ def disqualified_options(matrix: Dict[str, Any], criteria: List[Dict[str, Any]])
     for option in matrix.get("options", []):
         option_id = option["id"]
         for criterion in criteria:
-            if criterion.get("priority") == "must" and criterion.get("gate", True):
+            is_must = criterion.get("priority") == "must" or criterion.get("is_must") is True
+            if is_must and criterion.get("gate", True):
+                disqualifying = float(criterion.get("disqualifying_score", scale_min))
                 score = scores.get((option_id, criterion["id"]))
                 if score is None:
                     blockers.setdefault(option_id, []).append(f"missing:{criterion['id']}")
-                elif score <= scale_min:
+                elif score <= disqualifying:
                     blockers.setdefault(option_id, []).append(criterion["id"])
     return blockers
 
 
 def topsis(matrix: Dict[str, Any], include_disqualified: bool = False) -> Dict[str, Any]:
+    if matrix.get("altitude", {}).get("comparable") is False:
+        raise AltitudeError("Altitude check failed: options are not comparable.")
+
     criteria = normalize_criteria(matrix.get("criteria", []))
     options = matrix.get("options", [])
+    if len(options) < 2:
+        raise ValueError("At least two options are required.")
+
     scores = score_lookup(matrix.get("scores", []))
     blockers = disqualified_options(matrix, criteria)
-
     eligible = [o for o in options if include_disqualified or o["id"] not in blockers]
     if not eligible:
         raise ValueError("No eligible options remain after must-have gates.")
@@ -84,22 +91,29 @@ def topsis(matrix: Dict[str, Any], include_disqualified: bool = False) -> Dict[s
             row.append(scores[key])
         decision.append(row)
 
-    denominators = []
-    for j in range(len(criteria)):
+    denominators: List[float] = []
+    included_criteria: List[Tuple[int, Dict[str, Any]]] = []
+    for j, criterion in enumerate(criteria):
         denom = math.sqrt(sum(row[j] ** 2 for row in decision))
-        denominators.append(denom or 1.0)
+        if denom == 0:
+            continue
+        denominators.append(denom)
+        included_criteria.append((j, criterion))
+    if not included_criteria:
+        raise ValueError("No informative criteria remain after zero-denominator exclusion.")
 
+    raw_weight_sum = sum(c["normalized_weight"] for _, c in included_criteria)
     weighted = []
     for row in decision:
         weighted.append([
-            (row[j] / denominators[j]) * criteria[j]["normalized_weight"]
-            for j in range(len(criteria))
+            (row[j] / denom) * (criterion["normalized_weight"] / raw_weight_sum)
+            for denom, (j, criterion) in zip(denominators, included_criteria)
         ])
 
     ideal_best = []
     ideal_worst = []
-    for j, criterion in enumerate(criteria):
-        column = [row[j] for row in weighted]
+    for col_index, (_, criterion) in enumerate(included_criteria):
+        column = [row[col_index] for row in weighted]
         if criterion.get("direction", "benefit") == "cost":
             ideal_best.append(min(column))
             ideal_worst.append(max(column))
@@ -109,8 +123,8 @@ def topsis(matrix: Dict[str, Any], include_disqualified: bool = False) -> Dict[s
 
     rankings = []
     for option, row in zip(eligible, weighted):
-        d_best = math.sqrt(sum((row[j] - ideal_best[j]) ** 2 for j in range(len(criteria))))
-        d_worst = math.sqrt(sum((row[j] - ideal_worst[j]) ** 2 for j in range(len(criteria))))
+        d_best = math.sqrt(sum((row[j] - ideal_best[j]) ** 2 for j in range(len(included_criteria))))
+        d_worst = math.sqrt(sum((row[j] - ideal_worst[j]) ** 2 for j in range(len(included_criteria))))
         denom = d_best + d_worst
         closeness = d_worst / denom if denom else 0.0
         rankings.append({
@@ -127,24 +141,26 @@ def topsis(matrix: Dict[str, Any], include_disqualified: bool = False) -> Dict[s
     for i, row in enumerate(rankings, start=1):
         row["rank"] = i
 
-    near_tie_threshold = float(matrix.get("near_tie_threshold", 0.05))
-    near_tie = False
-    if len(rankings) >= 2:
-        near_tie = abs(rankings[0]["closeness"] - rankings[1]["closeness"]) < near_tie_threshold
+    near_tie_threshold = float(matrix.get("settings", {}).get("near_tie_threshold", matrix.get("near_tie_threshold", 0.05)))
+    near_tie = len(rankings) >= 2 and abs(rankings[0]["closeness"] - rankings[1]["closeness"]) < near_tie_threshold
+
+    criteria_weights = [
+        {
+            "criterion_id": c["id"],
+            "name": c.get("name", c["id"]),
+            "normalized_weight": c["normalized_weight"] / raw_weight_sum,
+            "priority": c.get("priority", "nice"),
+            "direction": c.get("direction", "benefit"),
+        }
+        for _, c in included_criteria
+    ]
 
     return {
+        "status": "ok",
         "rankings": rankings,
         "disqualified_options": blockers,
-        "criteria_weights": [
-            {
-                "criterion_id": c["id"],
-                "name": c.get("name", c["id"]),
-                "normalized_weight": c["normalized_weight"],
-                "priority": c.get("priority", "nice"),
-                "direction": c.get("direction", "benefit"),
-            }
-            for c in criteria
-        ],
+        "criteria_weights": criteria_weights,
+        "weights_sum_included": sum(c["normalized_weight"] for c in criteria_weights),
         "near_tie": near_tie,
         "near_tie_threshold": near_tie_threshold,
     }
@@ -159,6 +175,9 @@ def main() -> int:
 
     try:
         result = topsis(load_matrix(args.input), include_disqualified=args.include_disqualified)
+    except AltitudeError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
     except Exception as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
