@@ -6,11 +6,13 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import re
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 DEFAULT_POINTS = {"must": 5.0, "nice": 1.0}
+NUMERIC_ONLY_RE = re.compile(r"^\s*[-+]?(?:\d+(?:\.\d*)?|\.\d+)\s*$")
 
 
 class AltitudeError(ValueError):
@@ -20,6 +22,28 @@ class AltitudeError(ValueError):
 def load_matrix(path: str) -> Dict[str, Any]:
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
+
+
+def validate_aspect_notes(scores: List[Dict[str, Any]]) -> None:
+    """Require a descriptive note for every option/criterion score cell."""
+    for row in scores:
+        option_id = row.get("option_id", "<missing option_id>")
+        criterion_id = row.get("criterion_id", "<missing criterion_id>")
+        location = f"option={option_id} criterion={criterion_id}"
+
+        if "aspect_note" not in row:
+            raise ValueError(f"Missing aspect_note for {location}")
+
+        aspect_note = row["aspect_note"]
+        if not isinstance(aspect_note, str):
+            raise ValueError(f"aspect_note must be text for {location}")
+
+        stripped = aspect_note.strip()
+        if not stripped:
+            raise ValueError(f"aspect_note cannot be empty for {location}")
+
+        if NUMERIC_ONLY_RE.match(stripped):
+            raise ValueError(f"aspect_note cannot be numeric-only for {location}")
 
 
 def normalize_criteria(criteria: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -44,6 +68,7 @@ def normalize_criteria(criteria: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
 
 
 def score_lookup(scores: List[Dict[str, Any]]) -> Dict[Tuple[str, str], float]:
+    validate_aspect_notes(scores)
     return {(row["option_id"], row["criterion_id"]): float(row["score"]) for row in scores}
 
 
