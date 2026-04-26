@@ -130,12 +130,19 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["option_id", "criterion_id", "score"],
+        "required": ["option_id", "criterion_id", "aspect_note", "score"],
         "additionalProperties": false,
         "properties": {
           "option_id": {"type": "string"},
           "criterion_id": {"type": "string"},
-          "aspect_note": {"type": "string"},
+          "aspect_note": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "not": {
+              "pattern": "^\\s*[-+]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)\\s*$"
+            }
+          },
           "score": {"type": "number"},
           "color": {"type": "string", "enum": ["red", "yellow", "green", "Red", "Yellow", "Green"]},
           "uncertainty_note": {"type": "string"}
