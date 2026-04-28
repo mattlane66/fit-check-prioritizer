@@ -1,0 +1,21 @@
+[project]
+name = "fit-check-prioritizer"
+version = "0.1.0"
+description = "Fit-check decision matrix tooling with TOPSIS ranking."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+  "jsonschema>=4.0",
+  "pytest>=8.0",
+  "ruff>=0.6"
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
