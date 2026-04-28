@@ -19,9 +19,36 @@ class AltitudeError(ValueError):
     """Raised when the matrix mixes non-comparable options."""
 
 
+class MatrixValidationError(ValueError):
+    """Raised when the matrix contract is incomplete or internally inconsistent."""
+
+    def __init__(self, errors: List[str]):
+        self.errors = errors
+        super().__init__("Matrix validation failed:\n- " + "\n- ".join(errors))
+
+
 def load_matrix(path: str) -> Dict[str, Any]:
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
+
+
+def _is_number(value: Any) -> bool:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return False
+    return math.isfinite(number)
+
+
+def _find_duplicate_ids(rows: List[Dict[str, Any]], label: str) -> List[str]:
+    seen = set()
+    duplicates = []
+    for row in rows:
+        row_id = row.get("id")
+        if row_id in seen and row_id not in duplicates:
+            duplicates.append(row_id)
+        seen.add(row_id)
+    return [f"Duplicate {label} id: {item}" for item in duplicates]
 
 
 def validate_aspect_notes(scores: List[Dict[str, Any]]) -> None:
@@ -46,9 +73,122 @@ def validate_aspect_notes(scores: List[Dict[str, Any]]) -> None:
             raise ValueError(f"aspect_note cannot be numeric-only for {location}")
 
 
-def normalize_criteria(criteria: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def validate_matrix_integrity(matrix: Dict[str, Any]) -> None:
+    """Validate matrix references, completeness, scores, and notes before computation."""
+    errors: List[str] = []
+
+    criteria = matrix.get("criteria", [])
+    options = matrix.get("options", [])
+    scores = matrix.get("scores", [])
+
+    if not isinstance(criteria, list) or not criteria:
+        errors.append("At least one criterion is required.")
+        criteria = []
+    if not isinstance(options, list) or len(options) < 2:
+        errors.append("At least two options are required.")
+        options = []
+    if not isinstance(scores, list):
+        errors.append("scores must be a list.")
+        scores = []
+
+    for index, criterion in enumerate(criteria):
+        if not isinstance(criterion, dict):
+            errors.append(f"criteria[{index}] must be an object.")
+            continue
+        if not criterion.get("id"):
+            errors.append(f"criteria[{index}] is missing id.")
+        if not criterion.get("name"):
+            errors.append(f"criteria[{index}] is missing name.")
+
+    for index, option in enumerate(options):
+        if not isinstance(option, dict):
+            errors.append(f"options[{index}] must be an object.")
+            continue
+        if not option.get("id"):
+            errors.append(f"options[{index}] is missing id.")
+        if not option.get("name"):
+            errors.append(f"options[{index}] is missing name.")
+
+    criteria_dicts = [c for c in criteria if isinstance(c, dict)]
+    option_dicts = [o for o in options if isinstance(o, dict)]
+    errors.extend(_find_duplicate_ids(criteria_dicts, "criterion"))
+    errors.extend(_find_duplicate_ids(option_dicts, "option"))
+
+    criterion_ids = {c.get("id") for c in criteria_dicts if c.get("id")}
+    option_ids = {o.get("id") for o in option_dicts if o.get("id")}
+
+    scale = matrix.get("scale", {}) if isinstance(matrix.get("scale", {}), dict) else {}
+    scale_min = scale.get("min")
+    scale_max = scale.get("max")
+    if scale_min is not None and not _is_number(scale_min):
+        errors.append("scale.min must be numeric when provided.")
+    if scale_max is not None and not _is_number(scale_max):
+        errors.append("scale.max must be numeric when provided.")
+    if _is_number(scale_min) and _is_number(scale_max) and float(scale_min) > float(scale_max):
+        errors.append("scale.min cannot be greater than scale.max.")
+
+    seen_cells = set()
+    valid_score_rows: List[Dict[str, Any]] = []
+    for index, row in enumerate(scores):
+        if not isinstance(row, dict):
+            errors.append(f"scores[{index}] must be an object.")
+            continue
+        valid_score_rows.append(row)
+
+        option_id = row.get("option_id")
+        criterion_id = row.get("criterion_id")
+        cell = (option_id, criterion_id)
+        location = f"option={option_id or '<missing option_id>'} criterion={criterion_id or '<missing criterion_id>'}"
+
+        if not option_id:
+            errors.append(f"scores[{index}] is missing option_id.")
+        elif option_id not in option_ids:
+            errors.append(f"Unknown option_id in scores[{index}]: {option_id}")
+
+        if not criterion_id:
+            errors.append(f"scores[{index}] is missing criterion_id.")
+        elif criterion_id not in criterion_ids:
+            errors.append(f"Unknown criterion_id in scores[{index}]: {criterion_id}")
+
+        if option_id and criterion_id:
+            if cell in seen_cells:
+                errors.append(f"Duplicate score cell for {location}")
+            seen_cells.add(cell)
+
+        if "score" not in row:
+            errors.append(f"Missing score for {location}")
+        elif not _is_number(row["score"]):
+            errors.append(f"score must be numeric for {location}")
+        else:
+            score = float(row["score"])
+            if _is_number(scale_min) and score < float(scale_min):
+                errors.append(f"score is below scale.min for {location}")
+            if _is_number(scale_max) and score > float(scale_max):
+                errors.append(f"score is above scale.max for {location}")
+
+    try:
+        validate_aspect_notes(valid_score_rows)
+    except ValueError as exc:
+        errors.append(str(exc))
+
+    for option_id in sorted(option_ids):
+        for criterion_id in sorted(criterion_ids):
+            if (option_id, criterion_id) not in seen_cells:
+                errors.append(f"Missing score cell for option={option_id} criterion={criterion_id}")
+
+    if errors:
+        raise MatrixValidationError(errors)
+
+
+def normalize_criteria(criteria: List[Dict[str, Any]], settings: Dict[str, Any] | None = None) -> List[Dict[str, Any]]:
     if not criteria:
         raise ValueError("At least one criterion is required.")
+
+    settings = settings or {}
+    default_points = {
+        "must": float(settings.get("must_points", DEFAULT_POINTS["must"])),
+        "nice": float(settings.get("nice_points", DEFAULT_POINTS["nice"])),
+    }
 
     explicit = [c for c in criteria if "weight" in c and c["weight"] is not None]
     if explicit:
@@ -60,7 +200,7 @@ def normalize_criteria(criteria: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     points = []
     for c in criteria:
         priority = c.get("priority", "nice")
-        points.append(float(c.get("points", DEFAULT_POINTS.get(priority, 1.0))))
+        points.append(float(c.get("points", default_points.get(priority, default_points["nice"]))))
     total_points = sum(points)
     if total_points <= 0:
         raise ValueError("Criterion points must sum to a positive number.")
@@ -95,7 +235,9 @@ def topsis(matrix: Dict[str, Any], include_disqualified: bool = False) -> Dict[s
     if matrix.get("altitude", {}).get("comparable") is False:
         raise AltitudeError("Altitude check failed: options are not comparable.")
 
-    criteria = normalize_criteria(matrix.get("criteria", []))
+    validate_matrix_integrity(matrix)
+
+    criteria = normalize_criteria(matrix.get("criteria", []), matrix.get("settings", {}))
     options = matrix.get("options", [])
     if len(options) < 2:
         raise ValueError("At least two options are required.")
