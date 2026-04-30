@@ -2,6 +2,8 @@
 
 Use this decision matrix for gnarly prioritization problems. It feeds your finished Fit-check Decision Matrix sheet with TOPSIS. Get a sense of it [here](https://chatgpt.com/g/g-696810f0b98081918c1211ecd38f62a3-fit-check-decision-matrix-with-topsis). You can view a template sheet [here](https://docs.google.com/spreadsheets/d/1ATsYRHJ5M14awkcD8nEF55zM4iwbuXxFpUd4ZbcNUm8/edit?usp=sharing).
 
+Use it exclusively for: "Type 1" decisions—massive, difficult-to-reverse commitments. Think "Build vs. Buy" evaluations, selecting core infrastructure or vendors, M&A targets, where there is endless disagreement about which feature path to go with, or deciding between entirely different architectural systems where millions of dollars and years of time are on the line.
+
 This repo contains a Fit-check TOPSIS skill bundle for ranking comparable idea paths/solution options with:
 
 - a decision frame grounded in a real episode,
