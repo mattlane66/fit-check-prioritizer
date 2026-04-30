@@ -4,6 +4,7 @@ Use this decision matrix for gnarly prioritization problems. It feeds your finis
 
 Use it for: High-complexity systemic decisions where "gut feel" lacks rigor and traditional scoring lacks depth.
 While essential for "Type 1" irreversible commitments—such as Build vs. Buy evaluations, M&A targets, or core infrastructure—its true power lies in resolving strategic stalemates. It acts as a logical guardrail in 0-to-1 development, gating features for "systemic fit" and managing conflicting trade-offs between technical sustainability, speed-to-market, and the customer’s life context. Use it when the path forward is "fuzzy" but the cost of being wrong is high.
+For more lightweight approaches, try [this](https://world.hey.com/jason/the-obvious-the-easy-and-the-possible-2e11a3fb) or [this](https://www.producttalk.org/prioritize-opportunities/?srsltid=AfmBOooMepfReyNq_KI_k0MuZxrCjYVbwQx7uwR-547H8qWMnVNv-6mt).
 
 This repo contains a Fit-check TOPSIS skill bundle for ranking comparable idea paths/solution options with:
 
