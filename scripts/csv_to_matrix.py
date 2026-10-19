@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.topsis import validate_matrix_integrity
+from scripts.topsis import validate_matrix_integrity  # noqa: E402 - bootstrap repository path
 
 
 def blank_to_none(value: str | None) -> str | None:
@@ -118,7 +118,7 @@ def main() -> int:
 
     try:
         matrix = build_matrix(args.criteria, args.options, args.scores)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - report errors at the CLI boundary
         print(f"error: {exc}", file=sys.stderr)
         return 1
 

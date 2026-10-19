@@ -5,3 +5,6 @@ o1,c3,1,Prototype requires some setup
 o2,c1,1,Partial coverage
 o2,c2,2,Low operational risk
 o2,c3,2,Fast to validate
+o3,c1,1,Improves cleanup but does not route most cases at intake
+o3,c2,2,No new data movement
+o3,c3,2,Can start immediately with a checklist
