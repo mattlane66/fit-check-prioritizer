@@ -2,8 +2,8 @@ import copy
 import json
 import subprocess
 import sys
-from pathlib import Path
 import unittest
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "topsis.py"
@@ -14,7 +14,7 @@ EXAMPLE = ROOT / "examples" / "example_matrix.json"
 
 sys.path.insert(0, str(ROOT))
 
-from scripts.topsis import MatrixValidationError, topsis, validate_matrix_integrity
+from scripts.topsis import MatrixValidationError, topsis, validate_matrix_integrity  # noqa: E402 - bootstrap repository path
 
 
 class TopsisRunnerTests(unittest.TestCase):
@@ -87,6 +87,7 @@ class TopsisRunnerTests(unittest.TestCase):
         try:
             proc = subprocess.run(
                 [sys.executable, str(SCRIPT), str(tmp)],
+                check=False,
                 capture_output=True,
                 text=True,
             )

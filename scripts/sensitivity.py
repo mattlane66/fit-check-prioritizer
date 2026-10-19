@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.topsis import load_matrix, topsis
+from scripts.topsis import load_matrix, topsis  # noqa: E402 - bootstrap repository path
 
 
 def winner(matrix: dict[str, Any]) -> str:
@@ -64,7 +64,7 @@ def run_sensitivity(matrix: dict[str, Any]) -> dict[str, Any]:
             same = variant_winner == base_winner
             stable += int(same)
             outcomes.append({"variant": label, "winner": variant_winner, "same_as_base": same})
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - report errors at the CLI boundary
             outcomes.append({"variant": label, "error": str(exc), "same_as_base": False})
 
     total = len(outcomes)
@@ -88,7 +88,7 @@ def main() -> int:
 
     try:
         report = run_sensitivity(load_matrix(args.input))
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - report errors at the CLI boundary
         print(f"error: {exc}", file=sys.stderr)
         return 1
 

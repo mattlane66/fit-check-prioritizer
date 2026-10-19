@@ -9,7 +9,7 @@ import math
 import re
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 DEFAULT_POINTS = {"must": 5.0, "nice": 1.0}
 NUMERIC_ONLY_RE = re.compile(r"^\s*[-+]?(?:\d+(?:\.\d*)?|\.\d+)\s*$")
@@ -22,12 +22,12 @@ class AltitudeError(ValueError):
 class MatrixValidationError(ValueError):
     """Raised when the matrix contract is incomplete or internally inconsistent."""
 
-    def __init__(self, errors: List[str]):
+    def __init__(self, errors: list[str]):
         self.errors = errors
         super().__init__("Matrix validation failed:\n- " + "\n- ".join(errors))
 
 
-def load_matrix(path: str) -> Dict[str, Any]:
+def load_matrix(path: str) -> dict[str, Any]:
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
@@ -40,7 +40,7 @@ def _is_number(value: Any) -> bool:
     return math.isfinite(number)
 
 
-def _find_duplicate_ids(rows: List[Dict[str, Any]], label: str) -> List[str]:
+def _find_duplicate_ids(rows: list[dict[str, Any]], label: str) -> list[str]:
     seen = set()
     duplicates = []
     for row in rows:
@@ -51,7 +51,7 @@ def _find_duplicate_ids(rows: List[Dict[str, Any]], label: str) -> List[str]:
     return [f"Duplicate {label} id: {item}" for item in duplicates]
 
 
-def validate_aspect_notes(scores: List[Dict[str, Any]]) -> None:
+def validate_aspect_notes(scores: list[dict[str, Any]]) -> None:
     """Require a descriptive note for every option/criterion score cell."""
     for row in scores:
         option_id = row.get("option_id", "<missing option_id>")
@@ -63,7 +63,7 @@ def validate_aspect_notes(scores: List[Dict[str, Any]]) -> None:
 
         aspect_note = row["aspect_note"]
         if not isinstance(aspect_note, str):
-            raise ValueError(f"aspect_note must be text for {location}")
+            raise ValueError(f"aspect_note must be text for {location}")  # noqa: TRY004 - retain validation exception contract
 
         stripped = aspect_note.strip()
         if not stripped:
@@ -73,9 +73,9 @@ def validate_aspect_notes(scores: List[Dict[str, Any]]) -> None:
             raise ValueError(f"aspect_note cannot be numeric-only for {location}")
 
 
-def validate_matrix_integrity(matrix: Dict[str, Any]) -> None:
+def validate_matrix_integrity(matrix: dict[str, Any]) -> None:
     """Validate matrix references, completeness, scores, and notes before computation."""
-    errors: List[str] = []
+    errors: list[str] = []
 
     criteria = matrix.get("criteria", [])
     options = matrix.get("options", [])
@@ -128,7 +128,7 @@ def validate_matrix_integrity(matrix: Dict[str, Any]) -> None:
         errors.append("scale.min cannot be greater than scale.max.")
 
     seen_cells = set()
-    valid_score_rows: List[Dict[str, Any]] = []
+    valid_score_rows: list[dict[str, Any]] = []
     for index, row in enumerate(scores):
         if not isinstance(row, dict):
             errors.append(f"scores[{index}] must be an object.")
@@ -180,7 +180,7 @@ def validate_matrix_integrity(matrix: Dict[str, Any]) -> None:
         raise MatrixValidationError(errors)
 
 
-def normalize_criteria(criteria: List[Dict[str, Any]], settings: Dict[str, Any] | None = None) -> List[Dict[str, Any]]:
+def normalize_criteria(criteria: list[dict[str, Any]], settings: dict[str, Any] | None = None) -> list[dict[str, Any]]:
     if not criteria:
         raise ValueError("At least one criterion is required.")
 
@@ -207,15 +207,15 @@ def normalize_criteria(criteria: List[Dict[str, Any]], settings: Dict[str, Any] 
     return [{**c, "normalized_weight": p / total_points} for c, p in zip(criteria, points)]
 
 
-def score_lookup(scores: List[Dict[str, Any]]) -> Dict[Tuple[str, str], float]:
+def score_lookup(scores: list[dict[str, Any]]) -> dict[tuple[str, str], float]:
     validate_aspect_notes(scores)
     return {(row["option_id"], row["criterion_id"]): float(row["score"]) for row in scores}
 
 
-def disqualified_options(matrix: Dict[str, Any], criteria: List[Dict[str, Any]]) -> Dict[str, List[str]]:
+def disqualified_options(matrix: dict[str, Any], criteria: list[dict[str, Any]]) -> dict[str, list[str]]:
     scale_min = float(matrix.get("scale", {}).get("min", 0))
     scores = score_lookup(matrix.get("scores", []))
-    blockers: Dict[str, List[str]] = {}
+    blockers: dict[str, list[str]] = {}
 
     for option in matrix.get("options", []):
         option_id = option["id"]
@@ -231,7 +231,7 @@ def disqualified_options(matrix: Dict[str, Any], criteria: List[Dict[str, Any]])
     return blockers
 
 
-def topsis(matrix: Dict[str, Any], include_disqualified: bool = False) -> Dict[str, Any]:
+def topsis(matrix: dict[str, Any], include_disqualified: bool = False) -> dict[str, Any]:
     if matrix.get("altitude", {}).get("comparable") is False:
         raise AltitudeError("Altitude check failed: options are not comparable.")
 
@@ -248,7 +248,7 @@ def topsis(matrix: Dict[str, Any], include_disqualified: bool = False) -> Dict[s
     if not eligible:
         raise ValueError("No eligible options remain after must-have gates.")
 
-    decision: List[List[float]] = []
+    decision: list[list[float]] = []
     for option in eligible:
         row = []
         for criterion in criteria:
@@ -258,8 +258,8 @@ def topsis(matrix: Dict[str, Any], include_disqualified: bool = False) -> Dict[s
             row.append(scores[key])
         decision.append(row)
 
-    denominators: List[float] = []
-    included_criteria: List[Tuple[int, Dict[str, Any]]] = []
+    denominators: list[float] = []
+    included_criteria: list[tuple[int, dict[str, Any]]] = []
     for j, criterion in enumerate(criteria):
         denom = math.sqrt(sum(row[j] ** 2 for row in decision))
         if denom == 0:
@@ -345,7 +345,7 @@ def main() -> int:
     except AltitudeError as exc:
         print(str(exc), file=sys.stderr)
         return 2
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - report errors at the CLI boundary
         print(f"error: {exc}", file=sys.stderr)
         return 1
 

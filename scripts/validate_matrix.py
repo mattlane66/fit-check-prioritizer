@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.topsis import MatrixValidationError, load_matrix, validate_matrix_integrity
+from scripts.topsis import MatrixValidationError, load_matrix, validate_matrix_integrity  # noqa: E402 - bootstrap repository path
 
 
 def validate_schema_if_available(matrix: dict) -> list[str]:
@@ -52,7 +52,7 @@ def main() -> int:
     except MatrixValidationError as exc:
         print(str(exc), file=sys.stderr)
         return 1
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - report errors at the CLI boundary
         print(f"error: {exc}", file=sys.stderr)
         return 1
 
